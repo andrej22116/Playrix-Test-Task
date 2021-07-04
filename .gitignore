@@ -1,0 +1,6 @@
+.vs/
+lib/
+output/
+include/
+bin/
+*.vcxproj*
