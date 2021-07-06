@@ -1,14 +1,300 @@
 #include "ViewLayer.h"
+#include <SFML/Graphics.hpp>
+#include <GraphicsObject/GraphicsObject.h>
 
-ObjectId ViewLayer::appendGraphicsObject(std::shared_ptr<GraphicsObject> graphicsObject)
+struct ViewLayer::GraphicsObjectData {
+	GraphicsObject* graphicsObject;
+	std::vector<sf::Vector2<float>> shape;
+	sf::Rect<float> rect;
+	bool acceptsMouseEvents;
+};
+
+ViewLayer::ViewLayer()
+	: _notUsedId(1)
+	, _aabbTree(2, 0.1, { true, true }, { 1,1 }, 2048)
+	, _listenMouseEvents(false)
+	, _needConstUpdates(false)
 {
-	return ObjectId();
 }
 
-void ViewLayer::removeGraphicsObject(std::shared_ptr<GraphicsObject> graphicsObject)
+ViewLayer::ViewLayer(ViewLayer&& viewLayer) noexcept
+	: _objectsMap(std::move(viewLayer._objectsMap))
+	, _freeIdList(std::move(viewLayer._freeIdList))
+	, _notUsedId(viewLayer._notUsedId)
+	, _aabbTree(
+		2,
+		0.5,
+		{ true, true }, 
+		{ 
+			static_cast<double>(viewLayer._layerSize.width),
+			static_cast<double>(viewLayer._layerSize.height) 
+		},
+		2048
+	)
+	, _listenMouseEvents(false)
+	, _needConstUpdates(false)
 {
+	for (auto& [id, _] : _objectsMap) {
+		auto& aabb = viewLayer._aabbTree.getAABB(id);
+		_aabbTree.insertParticle(id, aabb.lowerBound, aabb.upperBound);
+	}
 }
 
-void ViewLayer::removeGraphicsObject(ObjectId graphicsObjectId)
+ViewLayer& ViewLayer::operator = (ViewLayer&& viewLayer) noexcept
 {
+	_objectsMap = std::move(viewLayer._objectsMap);
+	_freeIdList = std::move(viewLayer._freeIdList);
+	_notUsedId = viewLayer._notUsedId;
+
+	return *this;
+}
+
+ObjectId ViewLayer::appendGraphicsObject(GraphicsObject* graphicsObject)
+{
+	if (!graphicsObject) {
+		return 0;
+	}
+
+	graphicsObject->removeFromViewLayer();
+
+	auto objectId = getId();
+
+	auto [objectDataIter, _] = _objectsMap.emplace(std::make_pair( objectId, GraphicsObjectData{} ));
+	auto& [__, objectData] = *objectDataIter;
+
+	objectData.graphicsObject = graphicsObject;
+	objectData.rect = graphicsObject->rect();
+	objectData.shape = graphicsObject->shape();
+	objectData.acceptsMouseEvents = graphicsObject->acceptsMouseEvents();
+
+	auto objectPosition = graphicsObject->position();
+	auto posX = objectData.rect.left - objectPosition.x;
+	auto posY = objectData.rect.top - objectPosition.y;
+
+	_aabbTree.insertParticle(
+		objectId, 
+		{ 
+			posX,
+			posY
+		}, 
+		{ 
+			posX + objectData.rect.width,
+			posY + objectData.rect.height
+		}
+	);
+
+	return objectId;
+}
+
+void ViewLayer::removeGraphicsObject(GraphicsObject* graphicsObject)
+{
+	auto id = checkGraphicsObject(graphicsObject);
+	if ( !id ) {
+		return;
+	}
+
+	_aabbTree.removeParticle(id);
+
+	auto& graphicsObjectData = _objectsMap[id];
+	graphicsObjectData.graphicsObject->removeFromViewLayer();
+}
+
+void ViewLayer::updateGraphicsObjectGeometry(GraphicsObject* graphicsObject)
+{
+	auto id = checkGraphicsObject(graphicsObject);
+	if ( !id ) {
+		return;
+	}
+
+	auto& graphicsObjectData = _objectsMap[id];
+	auto objectPosition = graphicsObjectData.graphicsObject->position();
+	graphicsObjectData.rect = graphicsObjectData.graphicsObject->rect();
+	graphicsObjectData.shape = graphicsObjectData.graphicsObject->shape();
+
+	updateGraphicsObjectAabb(id, graphicsObjectData);
+}
+
+void ViewLayer::updateGraphicsObjectPosition(GraphicsObject* graphicsObject)
+{
+	auto id = checkGraphicsObject(graphicsObject);
+	if (!id) {
+		return;
+	}
+
+	auto& graphicsObjectData = _objectsMap[id];
+	updateGraphicsObjectAabb(id, graphicsObjectData);
+}
+
+void ViewLayer::enableSendingMouseEventsToGraphicsObject(GraphicsObject* graphicsObject)
+{
+	auto id = checkGraphicsObject(graphicsObject);
+	if ( !id ) {
+		return;
+	}
+
+	auto& graphicsObjectData = _objectsMap[id];
+	graphicsObjectData.acceptsMouseEvents = true;
+}
+
+bool ViewLayer::listenMouseEvents() const noexcept
+{
+	return _listenMouseEvents;
+}
+
+void ViewLayer::setListenMouseEvents(bool listenMouseEvents) noexcept
+{
+	_listenMouseEvents = listenMouseEvents;
+}
+
+bool ViewLayer::needConstUpdates() const noexcept
+{
+	return _needConstUpdates;
+}
+
+void ViewLayer::enableConstUpdates(bool needConstUpdates) noexcept
+{
+	_needConstUpdates = needConstUpdates;
+}
+
+void ViewLayer::setSize(const Size<uint32_t>& size) noexcept
+{
+	_aabbTree.setBoxSize({ static_cast<double>(size.width), static_cast<double>(size.height) });
+	_layerSize = size;
+}
+
+ViewLayer::~ViewLayer()
+{
+	std::unordered_map<ObjectId, GraphicsObjectData> objectsMap{ std::move(_objectsMap) };
+	_objectsMap = {};
+
+	for ( auto& [_, graphicsObjectData] : objectsMap ) {
+		graphicsObjectData.graphicsObject->removeFromViewLayer();
+	}
+}
+
+void ViewLayer::draw(sf::RenderTarget& renderTarget, double deltaTime) noexcept
+{
+	for( auto& [_, objectData] : _objectsMap ) {
+		objectData.graphicsObject->draw(renderTarget, deltaTime);
+	}
+}
+
+void ViewLayer::update(double updateFrequency, double timeDeviation) noexcept
+{
+	for (auto& [_, objectData] : _objectsMap) {
+		objectData.graphicsObject->update(updateFrequency, timeDeviation);
+	}
+}
+
+bool ViewLayer::onMouseButtonEvent(const sf::MouseButtonEvent& mouseButtonEvent) noexcept
+{
+	for ( auto id : getGraphicsObjectIdUnderPointList(mouseButtonEvent.x, mouseButtonEvent.y) ) {
+		if ( !_objectsMap[id].graphicsObject->onMouseButtonEvent(mouseButtonEvent) ) {
+			return false;
+		}
+	}
+	return true;
+}
+
+void ViewLayer::onMouseMoveEvent(const sf::MouseMoveEvent& mouseMoveEvent) noexcept
+{
+	_cursorOverObjectsSetCache.clear();
+
+	for (auto id : getGraphicsObjectIdUnderPointList(mouseMoveEvent.x, mouseMoveEvent.y)) {
+		auto& graphicsObjectData = _objectsMap[id];
+		if ( !graphicsObjectData.acceptsMouseEvents ) {
+			continue;
+		}
+
+		if ( _cursorOverObjectsSet.find(id) != _cursorOverObjectsSet.end() ) {
+			_cursorOverObjectsSetCache.insert(id);
+			_cursorOverObjectsSet.erase(id);
+			graphicsObjectData.graphicsObject->onMouseMoveEvent(mouseMoveEvent);
+		}
+		else {
+			_cursorOverObjectsSetCache.insert(id);
+			graphicsObjectData.graphicsObject->onMouseEnterEvent(mouseMoveEvent);
+		}
+	}
+
+	for ( auto id : _cursorOverObjectsSet ) {
+		auto& graphicsObjectData = _objectsMap[id];
+		if (graphicsObjectData.acceptsMouseEvents) {
+			graphicsObjectData.graphicsObject->onMouseLeaveEvent(mouseMoveEvent);
+		}
+	}
+
+	_cursorOverObjectsSetCache.swap(_cursorOverObjectsSet);
+}
+
+void ViewLayer::onResizeEvent(const sf::SizeEvent& sizeEvent) noexcept
+{
+	_aabbTree.setBoxSize({ static_cast<double>(sizeEvent.width), static_cast<double>(sizeEvent.height) });
+	_layerSize.width = sizeEvent.width;
+	_layerSize.height = sizeEvent.height;
+}
+
+ObjectId ViewLayer::getId() noexcept
+{
+	if ( !_freeIdList.empty() ) {
+		auto id = _freeIdList.back();
+		_freeIdList.pop_back();
+		return id;
+	}
+
+	auto id = _notUsedId;
+	++_notUsedId;
+	return id;
+}
+
+void ViewLayer::releaseId(ObjectId id) noexcept
+{
+	_freeIdList.push_back(id);
+}
+
+bool ViewLayer::containsId(ObjectId id) const noexcept
+{
+	return _objectsMap.find(id) != _objectsMap.end();
+}
+
+ObjectId ViewLayer::checkGraphicsObject(GraphicsObject* graphicsObject) const noexcept
+{
+	if (!graphicsObject) {
+		return 0;
+	}
+
+	auto id = graphicsObject->id();
+
+	if (!id || graphicsObject->ownerLayer() != this || !containsId(id)) {
+		return 0;
+	}
+
+	return id;
+}
+
+void ViewLayer::updateGraphicsObjectAabb(ObjectId objectId, const GraphicsObjectData& graphicsObjectData)
+{
+	auto objectPosition = graphicsObjectData.graphicsObject->position();
+	auto posX = graphicsObjectData.rect.left - objectPosition.x;
+	auto posY = graphicsObjectData.rect.top - objectPosition.y;
+
+	_aabbTree.updateParticle(
+		objectId,
+		{
+			posX,
+			posY
+		},
+		{
+			posX + graphicsObjectData.rect.width,
+			posY + graphicsObjectData.rect.height
+		}
+	);
+}
+
+std::vector<uint32_t> ViewLayer::getGraphicsObjectIdUnderPointList(int x, int y)
+{
+	return _aabbTree.query({ 
+		{static_cast<double>(x), static_cast<double>(y)},
+		{static_cast<double>(x + 1), static_cast<double>(y + 1)}
+	});
 }

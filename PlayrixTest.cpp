@@ -5,6 +5,9 @@
 
 #include "framework.h"
 #include "PlayrixTest.h"
+#include <Scene/Scene.h>
+#include <ViewLayer/ViewLayer.h>
+#include <Controls/Button/Button.h>
 
 LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
 
@@ -34,6 +37,19 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     double time = 0;
 
+    auto windowSize = window.getSize();
+
+    auto layer = new ViewLayer();
+    layer->setSize({ windowSize.x, windowSize.y });
+    layer->setListenMouseEvents(true);
+
+    auto button = new Button("Hello");
+    button->setInViewLayer(layer);
+    button->setPosition({ 100, 100 });
+
+    auto scene = new Scene();
+    scene->pushViewLayer(layer);
+
     while ( window.isOpen() )
     {
         double deltaTime = static_cast<double>(clock.getElapsedTime().asMicroseconds()) / 1000000;
@@ -42,17 +58,31 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
         sf::Text text{ "Delta time: " + std::to_string(deltaTime), font, 24 };
         sf::Text text2{ "Time: " + std::to_string(static_cast<int>(time)), font, 24 };
-        text.setPosition(24, 24);
+        text.setPosition(0, 0);
         text2.setPosition(24, 52);
 
         sf::Event event;
         while (window.pollEvent(event))
         {
+            switch (event.type) {
+                case sf::Event::Closed:  {
+                    window.close();
+                    break;
+                }
+                case sf::Event::MouseMoved: {
+                    scene->propagateMouseMoveEvent(event.mouseMove);
+                }
+            }
+
             if (event.type == sf::Event::Closed)
                 window.close();
+
         }
 
+        
+
         window.clear();
+        scene->drawScene(window, deltaTime);
         window.draw(text);
         window.draw(text2);
         //window.draw(shape);

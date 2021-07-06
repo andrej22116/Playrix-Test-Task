@@ -6,25 +6,54 @@ std::vector<sf::Vector2<float>> GraphicsObject::shape() const noexcept
     return {};
 }
 
-void GraphicsObject::draw(sf::RenderTarget& /*renderTarget*/) noexcept
+void GraphicsObject::draw(sf::RenderTarget& /*renderTarget*/, double /*deltaTime*/) noexcept
 {
 }
 
-GraphicsObject::GraphicsObject(std::weak_ptr<ViewLayer> owner)
+void GraphicsObject::update(double /*updateFrequency*/, double /*timeDeviation*/ ) noexcept
+{
+}
+
+bool GraphicsObject::onMouseButtonEvent(const sf::MouseButtonEvent& mouseButtonEvent) noexcept
+{
+    return true;
+}
+
+bool GraphicsObject::onMouseMoveEvent(const sf::MouseMoveEvent& mouseMoveEvent) noexcept
+{
+    return true;
+}
+
+bool GraphicsObject::onMouseEnterEvent(const sf::MouseEnterEvent& mouseMoveEvent) noexcept
+{
+    return true;
+}
+
+bool GraphicsObject::onMouseLeaveEvent(const sf::MouseLeaveEvent& mouseMoveEvent) noexcept
+{
+    return true;
+}
+
+GraphicsObject::~GraphicsObject()
+{
+    removeFromViewLayer();
+}
+
+GraphicsObject::GraphicsObject(ViewLayer* owner)
     : _id(0)
     , _position(0, 0)
     , _name("")
     , _ownerLayer(owner)
-    , _isValidGeometry(false)
+    , _acceptMouseEvents(false)
 {
 }
 
-GraphicsObject::GraphicsObject(sf::Vector2<float> position, std::weak_ptr<ViewLayer> owner)
+GraphicsObject::GraphicsObject(sf::Vector2<float> position, ViewLayer* owner)
     : _id(0)
     , _position(position)
     , _name("")
     , _ownerLayer(owner)
-    , _isValidGeometry(false)
+    , _acceptMouseEvents(false)
 {
 }
 
@@ -46,31 +75,32 @@ sf::Vector2<float> GraphicsObject::position() const noexcept
 void GraphicsObject::setX(float x) noexcept
 {
     _position.x = x;
+    if (_ownerLayer) {
+        _ownerLayer->updateGraphicsObjectPosition(this);
+    }
 }
 
 void GraphicsObject::setY(float y) noexcept
 {
     _position.y = y;
+    if (_ownerLayer) {
+        _ownerLayer->updateGraphicsObjectPosition(this);
+    }
 }
 
 void GraphicsObject::setPosition(sf::Vector2<float> position) noexcept
 {
     _position = position;
-}
-
-bool GraphicsObject::isValidGeometry() const noexcept
-{
-    return _isValidGeometry;
+    if ( _ownerLayer ) {
+        _ownerLayer->updateGraphicsObjectPosition(this);
+    }
 }
 
 void GraphicsObject::updateGeometry() noexcept
 {
-    _isValidGeometry = false;
-}
-
-void GraphicsObject::setGeometryState(bool isValidGeometry) noexcept
-{
-    _isValidGeometry = isValidGeometry;
+    if ( _ownerLayer ) {
+        _ownerLayer->updateGraphicsObjectGeometry(this);
+    }
 }
 
 std::string_view GraphicsObject::name() const noexcept
@@ -88,16 +118,16 @@ void GraphicsObject::setName(const std::string_view& name)
     _name = std::string{ name };
 }
 
-std::weak_ptr<ViewLayer> GraphicsObject::ownerLayer() const
+ViewLayer* GraphicsObject::ownerLayer() const
 {
     return _ownerLayer;
 }
 
-void GraphicsObject::remove() noexcept
+void GraphicsObject::removeFromViewLayer() noexcept
 {
-    if (auto owner = _ownerLayer.lock(); owner != nullptr) {
-        owner->removeGraphicsObject(_id);
-        _ownerLayer.reset();
+    if ( _ownerLayer ) {
+        _ownerLayer->removeGraphicsObject(this);
+        _ownerLayer = nullptr;
         _id = 0;
     }
 }
@@ -107,15 +137,35 @@ ObjectId GraphicsObject::id() const noexcept
     return _id;
 }
 
+void GraphicsObject::setInViewLayer(ViewLayer* viewLayer) noexcept
+{
+    if ( !viewLayer ) {
+        return;
+    }
+
+    auto id = viewLayer->appendGraphicsObject(this);
+    if ( !id ) {
+        return;
+    }
+
+    _id = id;
+    _ownerLayer = viewLayer;
+}
+
+void GraphicsObject::enableMouseEvents(bool isEnabled) noexcept
+{
+    _acceptMouseEvents = isEnabled;
+    if ( _ownerLayer ) {
+        _ownerLayer->enableSendingMouseEventsToGraphicsObject(this);
+    }
+}
+
+bool GraphicsObject::acceptsMouseEvents() const noexcept
+{
+    return _acceptMouseEvents;
+}
+
 void GraphicsObject::setId(ObjectId id) noexcept
 {
     _id = id;
-}
-
-void setOwnerLayer(std::shared_ptr<GraphicsObject> graphicsObject, std::shared_ptr<ViewLayer> ownerLayer)
-{
-    graphicsObject->remove();
-    ObjectId objectId = ownerLayer->appendGraphicsObject(graphicsObject);
-    graphicsObject->setId(objectId);
-    graphicsObject->_ownerLayer = ownerLayer;
 }

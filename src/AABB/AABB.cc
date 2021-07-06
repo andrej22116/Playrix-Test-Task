@@ -334,7 +334,7 @@ namespace aabb
         nodeCount--;
     }
 
-    void Tree::insertParticle(unsigned int particle, std::vector<double>& position, double radius)
+    void Tree::insertParticle(unsigned int particle, const std::vector<double>& position, double radius)
     {
         // Make sure the particle doesn't already exist.
         if (particleMap.count(particle) != 0)
@@ -384,7 +384,7 @@ namespace aabb
         nodes[node].particle = particle;
     }
 
-    void Tree::insertParticle(unsigned int particle, std::vector<double>& lowerBound, std::vector<double>& upperBound)
+    void Tree::insertParticle(unsigned int particle, const std::vector<double>& lowerBound, const std::vector<double>& upperBound)
     {
         // Make sure the particle doesn't already exist.
         if (particleMap.count(particle) != 0)
@@ -496,7 +496,7 @@ namespace aabb
         particleMap.clear();
     }
 
-    bool Tree::updateParticle(unsigned int particle, std::vector<double>& position, double radius,
+    bool Tree::updateParticle(unsigned int particle, const std::vector<double>& position, double radius,
                               bool alwaysReinsert)
     {
         // Validate the dimensionality of the position vector.
@@ -520,8 +520,8 @@ namespace aabb
         return updateParticle(particle, lowerBound, upperBound, alwaysReinsert);
     }
 
-    bool Tree::updateParticle(unsigned int particle, std::vector<double>& lowerBound,
-                              std::vector<double>& upperBound, bool alwaysReinsert)
+    bool Tree::updateParticle(unsigned int particle, const std::vector<double>& lowerBound,
+                              const std::vector<double>& upperBound, bool alwaysReinsert)
     {
         // Validate the dimensionality of the bounds vectors.
         if ((lowerBound.size() != dimension) && (upperBound.size() != dimension))

@@ -251,7 +251,7 @@ namespace aabb
             \param radius
                 The radius of the particle.
          */
-        void insertParticle(unsigned int, std::vector<double>&, double);
+        void insertParticle(unsigned int, const std::vector<double>&, double);
 
         //! Insert a particle into the tree (arbitrary shape with bounding box).
         /*! \param index
@@ -263,7 +263,7 @@ namespace aabb
             \param upperBound
                 The upper bound in each dimension.
          */
-        void insertParticle(unsigned int, std::vector<double>&, std::vector<double>&);
+        void insertParticle(unsigned int, const std::vector<double>&, const std::vector<double>&);
 
         /// Return the number of particles in the tree.
         unsigned int nParticles();
@@ -293,7 +293,7 @@ namespace aabb
             \return
                 Whether the particle was reinserted.
          */
-        bool updateParticle(unsigned int, std::vector<double>&, double, bool alwaysReinsert=false);
+        bool updateParticle(unsigned int, const std::vector<double>&, double, bool alwaysReinsert=false);
 
         //! Update the tree if a particle moves outside its fattened AABB.
         /*! \param particle
@@ -308,7 +308,7 @@ namespace aabb
             \param alwaysReinsert
                 Always reinsert the particle, even if it's within its old AABB (default: false)
          */
-        bool updateParticle(unsigned int, std::vector<double>&, std::vector<double>&, bool alwaysReinsert=false);
+        bool updateParticle(unsigned int, const std::vector<double>&, const std::vector<double>&, bool alwaysReinsert=false);
 
         //! Query the tree to find candidate interactions for a particle.
         /*! \param particle
