@@ -14,7 +14,7 @@ void GraphicsObject::update(double /*updateFrequency*/, double /*timeDeviation*/
 {
 }
 
-bool GraphicsObject::onMouseButtonEvent(const sf::MouseButtonEvent& mouseButtonEvent) noexcept
+bool GraphicsObject::onMouseButtonEvent(const sf::MouseButtonEvent& mouseButtonEvent, sf::Event::EventType eventType) noexcept
 {
     return true;
 }

@@ -41,12 +41,19 @@ void Scene::propagateMouseMoveEvent(const sf::MouseMoveEvent& mouseMoveEvent)
 	}
 }
 
-void Scene::propagateMouseButtonEvent(const sf::MouseButtonEvent& mouseButtonEvent)
+void Scene::propagateMouseButtonEvent(const sf::MouseButtonEvent& mouseButtonEvent, sf::Event::EventType eventType)
 {
 	for (auto viewLayer : _viewLayerStack) {
 		if (viewLayer->listenMouseEvents()) {
-			viewLayer->onMouseButtonEvent(mouseButtonEvent);
+			viewLayer->onMouseButtonEvent(mouseButtonEvent, eventType);
 		}
+	}
+}
+
+void Scene::propagateSizeEvent(const sf::SizeEvent& sizeEvent)
+{
+	for (auto viewLayer : _viewLayerStack) {
+		viewLayer->onSizeEvent(sizeEvent);
 	}
 }
 

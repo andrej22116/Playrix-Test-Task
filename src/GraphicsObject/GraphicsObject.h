@@ -45,7 +45,7 @@ public:
 	virtual void draw(sf::RenderTarget& renderTarget, double deltaTime) noexcept;
 	virtual void update(double updateFrequency, double timeDeviation) noexcept;
 
-	virtual bool onMouseButtonEvent(const sf::MouseButtonEvent& mouseButtonEvent) noexcept;
+	virtual bool onMouseButtonEvent(const sf::MouseButtonEvent& mouseButtonEvent, sf::Event::EventType eventType) noexcept;
 	virtual bool onMouseMoveEvent(const sf::MouseMoveEvent& mouseMoveEvent) noexcept;
 	virtual bool onMouseEnterEvent(const sf::MouseEnterEvent& mouseMoveEvent) noexcept;
 	virtual bool onMouseLeaveEvent(const sf::MouseLeaveEvent& mouseMoveEvent) noexcept;

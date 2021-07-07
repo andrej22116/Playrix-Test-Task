@@ -11,7 +11,7 @@ struct ViewLayer::GraphicsObjectData {
 
 ViewLayer::ViewLayer()
 	: _notUsedId(1)
-	, _aabbTree(2, 0.1, { true, true }, { 1,1 }, 2048)
+	, _aabbTree(2, 0, { true, true }, { 1,1 }, 2048)
 	, _listenMouseEvents(false)
 	, _needConstUpdates(false)
 {
@@ -23,7 +23,7 @@ ViewLayer::ViewLayer(ViewLayer&& viewLayer) noexcept
 	, _notUsedId(viewLayer._notUsedId)
 	, _aabbTree(
 		2,
-		0.5,
+		0,
 		{ true, true }, 
 		{ 
 			static_cast<double>(viewLayer._layerSize.width),
@@ -68,8 +68,8 @@ ObjectId ViewLayer::appendGraphicsObject(GraphicsObject* graphicsObject)
 	objectData.acceptsMouseEvents = graphicsObject->acceptsMouseEvents();
 
 	auto objectPosition = graphicsObject->position();
-	auto posX = objectData.rect.left - objectPosition.x;
-	auto posY = objectData.rect.top - objectPosition.y;
+	auto posX = objectPosition.x - objectData.rect.left;
+	auto posY = objectPosition.y - objectData.rect.top;
 
 	_aabbTree.insertParticle(
 		objectId, 
@@ -82,6 +82,8 @@ ObjectId ViewLayer::appendGraphicsObject(GraphicsObject* graphicsObject)
 			posY + objectData.rect.height
 		}
 	);
+
+	_aabbTree.query({ {101,101}, {102, 102} });
 
 	return objectId;
 }
@@ -158,8 +160,7 @@ void ViewLayer::enableConstUpdates(bool needConstUpdates) noexcept
 
 void ViewLayer::setSize(const Size<uint32_t>& size) noexcept
 {
-	_aabbTree.setBoxSize({ static_cast<double>(size.width), static_cast<double>(size.height) });
-	_layerSize = size;
+	onSizeEvent({ size.width, size.height });
 }
 
 ViewLayer::~ViewLayer()
@@ -186,10 +187,10 @@ void ViewLayer::update(double updateFrequency, double timeDeviation) noexcept
 	}
 }
 
-bool ViewLayer::onMouseButtonEvent(const sf::MouseButtonEvent& mouseButtonEvent) noexcept
+bool ViewLayer::onMouseButtonEvent(const sf::MouseButtonEvent& mouseButtonEvent, sf::Event::EventType eventType) noexcept
 {
 	for ( auto id : getGraphicsObjectIdUnderPointList(mouseButtonEvent.x, mouseButtonEvent.y) ) {
-		if ( !_objectsMap[id].graphicsObject->onMouseButtonEvent(mouseButtonEvent) ) {
+		if ( !_objectsMap[id].graphicsObject->onMouseButtonEvent(mouseButtonEvent, eventType) ) {
 			return false;
 		}
 	}
@@ -209,11 +210,15 @@ void ViewLayer::onMouseMoveEvent(const sf::MouseMoveEvent& mouseMoveEvent) noexc
 		if ( _cursorOverObjectsSet.find(id) != _cursorOverObjectsSet.end() ) {
 			_cursorOverObjectsSetCache.insert(id);
 			_cursorOverObjectsSet.erase(id);
-			graphicsObjectData.graphicsObject->onMouseMoveEvent(mouseMoveEvent);
+			if ( !graphicsObjectData.graphicsObject->onMouseMoveEvent(mouseMoveEvent) ) {
+				break;
+			}
 		}
 		else {
 			_cursorOverObjectsSetCache.insert(id);
-			graphicsObjectData.graphicsObject->onMouseEnterEvent(mouseMoveEvent);
+			if ( !graphicsObjectData.graphicsObject->onMouseEnterEvent(mouseMoveEvent) ) {
+				break;
+			};
 		}
 	}
 
@@ -227,7 +232,7 @@ void ViewLayer::onMouseMoveEvent(const sf::MouseMoveEvent& mouseMoveEvent) noexc
 	_cursorOverObjectsSetCache.swap(_cursorOverObjectsSet);
 }
 
-void ViewLayer::onResizeEvent(const sf::SizeEvent& sizeEvent) noexcept
+void ViewLayer::onSizeEvent(const sf::SizeEvent& sizeEvent) noexcept
 {
 	_aabbTree.setBoxSize({ static_cast<double>(sizeEvent.width), static_cast<double>(sizeEvent.height) });
 	_layerSize.width = sizeEvent.width;
@@ -275,8 +280,8 @@ ObjectId ViewLayer::checkGraphicsObject(GraphicsObject* graphicsObject) const no
 void ViewLayer::updateGraphicsObjectAabb(ObjectId objectId, const GraphicsObjectData& graphicsObjectData)
 {
 	auto objectPosition = graphicsObjectData.graphicsObject->position();
-	auto posX = graphicsObjectData.rect.left - objectPosition.x;
-	auto posY = graphicsObjectData.rect.top - objectPosition.y;
+	auto posX = objectPosition.x - graphicsObjectData.rect.left;
+	auto posY = objectPosition.y - graphicsObjectData.rect.top;
 
 	_aabbTree.updateParticle(
 		objectId,
@@ -294,7 +299,7 @@ void ViewLayer::updateGraphicsObjectAabb(ObjectId objectId, const GraphicsObject
 std::vector<uint32_t> ViewLayer::getGraphicsObjectIdUnderPointList(int x, int y)
 {
 	return _aabbTree.query({ 
-		{static_cast<double>(x), static_cast<double>(y)},
+		{static_cast<double>(x - 1), static_cast<double>(y - 1)},
 		{static_cast<double>(x + 1), static_cast<double>(y + 1)}
 	});
 }

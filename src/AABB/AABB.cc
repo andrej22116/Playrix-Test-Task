@@ -284,6 +284,14 @@ namespace aabb
     void Tree::setBoxSize(const std::vector<double>& boxSize_)
     {
         boxSize = boxSize_;
+        for (unsigned int i = 0; i < dimension; i++)
+        {
+            posMinImage[i] = 0.5 * boxSize[i];
+            negMinImage[i] = -0.5 * boxSize[i];
+
+            if (periodicity[i])
+                isPeriodic = true;
+        }
     }
 
     unsigned int Tree::allocateNode()

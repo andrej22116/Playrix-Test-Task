@@ -9,6 +9,8 @@
 #include <ViewLayer/ViewLayer.h>
 #include <Controls/Button/Button.h>
 
+#include <Game/BackgroundLayer/BackgroundLayer.h>
+
 LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
@@ -39,15 +41,23 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     auto windowSize = window.getSize();
 
+    auto backgroundLayer = new BackgroundLayer();
+    backgroundLayer->setSize({ windowSize.x, windowSize.y });
+
     auto layer = new ViewLayer();
     layer->setSize({ windowSize.x, windowSize.y });
     layer->setListenMouseEvents(true);
 
-    auto button = new Button("Hello");
+    auto button = new Button("Super test!");
+    button->setPosition({ 792, 100 });
     button->setInViewLayer(layer);
-    button->setPosition({ 100, 100 });
+
+    button->setOnClickHandler([](const std::string_view& str) {
+        MessageBoxA(0, str.data(), "Test", MB_OK);
+    });
 
     auto scene = new Scene();
+    scene->pushViewLayer(backgroundLayer);
     scene->pushViewLayer(layer);
 
     while ( window.isOpen() )
@@ -71,6 +81,17 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                 }
                 case sf::Event::MouseMoved: {
                     scene->propagateMouseMoveEvent(event.mouseMove);
+                    break;
+                }
+                case sf::Event::MouseButtonPressed: {
+                    scene->propagateMouseButtonEvent(event.mouseButton, sf::Event::MouseButtonPressed);
+                    break;
+                }
+                case sf::Event::Resized: {
+                    sf::FloatRect visibleArea(0, 0, event.size.width, event.size.height);
+                    window.setView(sf::View(visibleArea));
+                    scene->propagateSizeEvent(event.size);
+                    break;
                 }
             }
 
