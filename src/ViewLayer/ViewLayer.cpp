@@ -127,7 +127,7 @@ void ViewLayer::updateGraphicsObjectPosition(GraphicsObject* graphicsObject)
 	updateGraphicsObjectAabb(id, graphicsObjectData);
 }
 
-void ViewLayer::enableSendingMouseEventsToGraphicsObject(GraphicsObject* graphicsObject)
+void ViewLayer::enableSendingMouseEventsToGraphicsObject(GraphicsObject* graphicsObject, bool enabled)
 {
 	auto id = checkGraphicsObject(graphicsObject);
 	if ( !id ) {
@@ -135,7 +135,7 @@ void ViewLayer::enableSendingMouseEventsToGraphicsObject(GraphicsObject* graphic
 	}
 
 	auto& graphicsObjectData = _objectsMap[id];
-	graphicsObjectData.acceptsMouseEvents = true;
+	graphicsObjectData.acceptsMouseEvents = enabled;
 }
 
 bool ViewLayer::listenMouseEvents() const noexcept
@@ -161,6 +161,11 @@ void ViewLayer::enableConstUpdates(bool needConstUpdates) noexcept
 void ViewLayer::setSize(const Size<uint32_t>& size) noexcept
 {
 	onSizeEvent({ size.width, size.height });
+}
+
+const Size<uint32_t>& ViewLayer::size() const noexcept
+{
+	return _layerSize;
 }
 
 ViewLayer::~ViewLayer()

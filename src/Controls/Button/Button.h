@@ -22,16 +22,17 @@ public:
 	virtual bool onMouseEnterEvent(const sf::MouseEnterEvent& mouseMoveEvent) noexcept override;
 	virtual bool onMouseLeaveEvent(const sf::MouseLeaveEvent& mouseMoveEvent) noexcept override;
 
+	using CallbackType = std::function<void(const std::string_view&)>;
+
 private:
 	void recalculateButtonProps() noexcept;
 
 private:
 	float _padding[4];
-	sf::Font _font;
 	sf::Text _text;
 	sf::RectangleShape _backgroundRect;
 	sf::Vector2<float> _textOffset;
-	std::function<void(const std::string_view&)> _callback;
+	CallbackType _callback;
 	sf::Clock _clock;
 	float _backgroundOpacityChangeSpeed;
 	float _backgroundOpacity;

@@ -1,17 +1,17 @@
 #include "Button.h"
+#include <Game/GameSources/GameSources.h>
 
 Button::Button(const std::string& text)
 	: _backgroundOpacityChangeSpeed(10.0)
 	, _backgroundOpacity(0)
 	, _mouseOver(false)
 {
-	_font.loadFromFile("./src/fonts/13888.otf");
 	_padding[0] = 20;
 	_padding[1] = 40;
 	_padding[2] = 20;
 	_padding[3] = 40;
 
-	_text.setFont(_font);
+	_text.setFont(GameSources::mainFont());
 	_text.setCharacterSize(32);
 	_text.setString(text);
 

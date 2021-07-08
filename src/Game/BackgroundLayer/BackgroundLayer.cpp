@@ -1,9 +1,10 @@
 #include "BackgroundLayer.h"
+#include <Game/GameSources/GameSources.h>
 
 BackgroundLayer::BackgroundLayer()
 {
 	_backgroundRect.setPosition(0, 0);
-	_backgroundTile.loadFromFile("./src/img/bg.jpg");
+	_backgroundTile.loadFromFile(GameSources::backgroundTexturePath());
 	_backgroundTile.setRepeated(true);
 	_backgroundTile.setSmooth(true);
 	_backgroundRect.setTexture(_backgroundTile);

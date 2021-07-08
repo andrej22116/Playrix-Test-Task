@@ -32,7 +32,7 @@ public:
 
 	void updateGraphicsObjectPosition(GraphicsObject* graphicsObject);
 
-	void enableSendingMouseEventsToGraphicsObject(GraphicsObject* graphicsObject);
+	void enableSendingMouseEventsToGraphicsObject(GraphicsObject* graphicsObject, bool enabled);
 
 	bool listenMouseEvents() const noexcept;
 	void setListenMouseEvents(bool listenMouseEvents) noexcept;
@@ -41,6 +41,7 @@ public:
 	void enableConstUpdates(bool enableConstUpdates) noexcept;
 
 	void setSize(const Size<uint32_t>& size) noexcept;
+	const Size<uint32_t>& size() const noexcept;
 
 	virtual ~ViewLayer();
 

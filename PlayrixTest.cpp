@@ -6,10 +6,12 @@
 #include "framework.h"
 #include "PlayrixTest.h"
 #include <Scene/Scene.h>
-#include <ViewLayer/ViewLayer.h>
-#include <Controls/Button/Button.h>
 
+#include <Game/GameSources/GameSources.h>
+
+#include <Game/MenuLayer/MenuLayer.h>
 #include <Game/BackgroundLayer/BackgroundLayer.h>
+#include <Game/GameTimerLayer/GameTimerLayer.h>
 
 LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
 
@@ -21,6 +23,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     UNREFERENCED_PARAMETER(hPrevInstance);
     UNREFERENCED_PARAMETER(lpCmdLine);
 
+    GameSources::initSources("");
+
     sf::ContextSettings contextSettings{};
     contextSettings.majorVersion = 3;
     contextSettings.minorVersion = 3;
@@ -28,12 +32,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     contextSettings.antialiasingLevel = 4;
     contextSettings.depthBits = 24;
 
-    sf::Font font;
-    if (!font.loadFromFile("./src/fonts/13888.otf")) {
-        return -1;
-    }
-
     sf::RenderWindow window{ sf::VideoMode{1024, 768}, "Playrix test game!", sf::Style::Default, contextSettings };
+    window.setFramerateLimit(90);
 
     sf::Clock clock;
 
@@ -44,32 +44,44 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     auto backgroundLayer = new BackgroundLayer();
     backgroundLayer->setSize({ windowSize.x, windowSize.y });
 
-    auto layer = new ViewLayer();
-    layer->setSize({ windowSize.x, windowSize.y });
-    layer->setListenMouseEvents(true);
-
-    auto button = new Button("Super test!");
-    button->setPosition({ 792, 100 });
-    button->setInViewLayer(layer);
-
-    button->setOnClickHandler([](const std::string_view& str) {
+    auto menuLayer = new MenuLayer();
+    menuLayer->setSize({ windowSize.x, windowSize.y });
+    menuLayer->setListenMouseEvents(true);
+    menuLayer->setStartEventHandler([](const std::string_view& str) {
         MessageBoxA(0, str.data(), "Test", MB_OK);
     });
 
+    auto timerLayer = new GameTimerLayer();
+    timerLayer->setSize({ windowSize.x, windowSize.y });
+
     auto scene = new Scene();
     scene->pushViewLayer(backgroundLayer);
-    scene->pushViewLayer(layer);
+    scene->pushViewLayer(timerLayer);
+    scene->pushViewLayer(menuLayer);
 
+    timerLayer->setTime(15);
+    timerLayer->setTimeoutEventHandler([&]() {
+        timerLayer->setTime(15);
+    });
+
+    double constUpdateTime = 0.015;
+    double currentConstUpdateTime = 0.0160000001;
+
+    clock.restart();
     while ( window.isOpen() )
     {
         double deltaTime = static_cast<double>(clock.getElapsedTime().asMicroseconds()) / 1000000;
+        currentConstUpdateTime += deltaTime;
+
         time += deltaTime;
         clock.restart();
 
-        sf::Text text{ "Delta time: " + std::to_string(deltaTime), font, 24 };
-        sf::Text text2{ "Time: " + std::to_string(static_cast<int>(time)), font, 24 };
+        sf::Text text{ "Delta time: " + std::to_string(deltaTime), GameSources::mainFont(), 24 };
+        sf::Text text2{ "Time: " + std::to_string(static_cast<int>(time)), GameSources::mainFont(), 24 };
         text.setPosition(0, 0);
         text2.setPosition(24, 52);
+        text.setFillColor({ 0,0,0 });
+        text2.setFillColor({ 0,0,0 });
 
         sf::Event event;
         while (window.pollEvent(event))
@@ -103,6 +115,10 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         
 
         window.clear();
+        if (currentConstUpdateTime > constUpdateTime) {
+            scene->updateScene(constUpdateTime, currentConstUpdateTime - constUpdateTime);
+            currentConstUpdateTime = 0;
+        }
         scene->drawScene(window, deltaTime);
         window.draw(text);
         window.draw(text2);

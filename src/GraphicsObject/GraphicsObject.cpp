@@ -156,7 +156,7 @@ void GraphicsObject::enableMouseEvents(bool isEnabled) noexcept
 {
     _acceptMouseEvents = isEnabled;
     if ( _ownerLayer ) {
-        _ownerLayer->enableSendingMouseEventsToGraphicsObject(this);
+        _ownerLayer->enableSendingMouseEventsToGraphicsObject(this, isEnabled);
     }
 }
 
