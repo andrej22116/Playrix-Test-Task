@@ -96,9 +96,7 @@ void ViewLayer::removeGraphicsObject(GraphicsObject* graphicsObject)
 	}
 
 	_aabbTree.removeParticle(id);
-
-	auto& graphicsObjectData = _objectsMap[id];
-	graphicsObjectData.graphicsObject->removeFromViewLayer();
+	_objectsMap.erase(id);
 }
 
 void ViewLayer::updateGraphicsObjectGeometry(GraphicsObject* graphicsObject)

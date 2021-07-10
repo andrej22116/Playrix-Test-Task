@@ -4,10 +4,10 @@
 BackgroundLayer::BackgroundLayer()
 {
 	_backgroundRect.setPosition(0, 0);
-	_backgroundTile.loadFromFile(GameSources::backgroundTexturePath());
-	_backgroundTile.setRepeated(true);
-	_backgroundTile.setSmooth(true);
-	_backgroundRect.setTexture(_backgroundTile);
+	auto& texture = GameSources::texture("bg_texture");
+	texture.setRepeated(true);
+	texture.setSmooth(true);
+	_backgroundRect.setTexture(texture);
 }
 
 void BackgroundLayer::draw(sf::RenderTarget& renderTarget, double deltaTime) noexcept

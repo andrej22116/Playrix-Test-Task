@@ -12,7 +12,6 @@ public:
 	virtual void onSizeEvent(const sf::SizeEvent& sizeEvent) noexcept override;
 
 private:
-	sf::Texture _backgroundTile;
 	sf::RenderTexture _backgroundTexture;
 	sf::Sprite _backgroundRect;
 };

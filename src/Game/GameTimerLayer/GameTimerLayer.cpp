@@ -4,7 +4,7 @@
 GameTimerLayer::GameTimerLayer()
 	: _callback(nullptr)
 	, _time(0)
-	, _timeText("0", GameSources::mainFont(), 256)
+	, _timeText("0", GameSources::font("info_font"), 256)
 {
 	_timeText.setLetterSpacing(2);
 	_timeText.setFillColor({ 0,0,0,64 });

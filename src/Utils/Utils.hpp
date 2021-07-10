@@ -5,8 +5,31 @@
 #include <array>
 #include <cinttypes>
 #include <type_traits>
+#include <cmath>
 
 namespace utils {
+
+    inline bool isFloatingEqual(float first, float second, float precision) {
+        return std::abs(first - second) < precision;
+    }
+
+    template<typename T>
+    inline bool isVectorsEqual(const sf::Vector2<T>& left, const sf::Vector2<T>& right) {
+        return isFloatingEqual(left.x, right.x, 0.0001) && isFloatingEqual(left.y, right.y, 0.0001);
+    }
+
+    template<typename T>
+    inline T length(const sf::Vector2<T>& vector)
+    {
+        return std::sqrt(vector.x * vector.x + vector.y * vector.y);
+    }
+
+    template<typename T>
+    inline sf::Vector2<T> normalize(const sf::Vector2<T>& vector)
+    {
+        auto l = length(vector);
+        return { vector.x / l, vector.y / l };
+    }
 
 	template<typename T>
     inline bool testVertexInPolygone(const sf::Vector2<T>& vertex, const std::vector<sf::Vector2<T>>& polygon)

@@ -2,7 +2,7 @@
 #include <Game/GameSources/GameSources.h>
 
 MenuLayer::MenuLayer()
-	: _text("You are loose", GameSources::mainFont(), 56)
+	: _text("You are loose", GameSources::font("info_font"), 56)
 {
 	_text.setFillColor({ 0,0,0 });
 	_startButton = new Button("Start new game!");

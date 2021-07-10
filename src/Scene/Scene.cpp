@@ -1,8 +1,18 @@
 #include "Scene.h"
 #include <ViewLayer/ViewLayer.h>
 
+Scene::Scene(Size<uint32_t> sceneSize)
+{
+	_sceneSize = sceneSize;
+}
+
 void Scene::pushViewLayer(ViewLayer* viewLayer) noexcept
 {
+	if ( !viewLayer ) {
+		return;
+	}
+
+	viewLayer->setSize(_sceneSize);
 	_viewLayerStack.push_back(viewLayer);
 }
 
@@ -52,11 +62,8 @@ void Scene::propagateMouseButtonEvent(const sf::MouseButtonEvent& mouseButtonEve
 
 void Scene::propagateSizeEvent(const sf::SizeEvent& sizeEvent)
 {
+	_sceneSize = { sizeEvent.width, sizeEvent.height };
 	for (auto viewLayer : _viewLayerStack) {
 		viewLayer->onSizeEvent(sizeEvent);
 	}
-}
-
-Scene::Scene()
-{
 }

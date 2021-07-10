@@ -43,18 +43,24 @@ GraphicsObject::GraphicsObject(ViewLayer* owner)
     : _id(0)
     , _position(0, 0)
     , _name("")
-    , _ownerLayer(owner)
+    , _ownerLayer(nullptr)
     , _acceptMouseEvents(false)
 {
+    if (owner) {
+        setInViewLayer(owner);
+    }
 }
 
 GraphicsObject::GraphicsObject(sf::Vector2<float> position, ViewLayer* owner)
     : _id(0)
     , _position(position)
     , _name("")
-    , _ownerLayer(owner)
+    , _ownerLayer(nullptr)
     , _acceptMouseEvents(false)
 {
+    if (owner) {
+        setInViewLayer(owner);
+    }
 }
 
 float GraphicsObject::x() const noexcept

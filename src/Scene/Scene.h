@@ -8,7 +8,7 @@ class ViewLayer;
 class Scene
 {
 public:
-	Scene();
+	Scene(Size<uint32_t> sceneSize);
 
 	Scene(const Scene&) = delete;
 	Scene(Scene&&) = delete;
@@ -27,5 +27,6 @@ public:
 
 private:
 	std::vector<ViewLayer*> _viewLayerStack;
+	Size<uint32_t> _sceneSize;
 };
 

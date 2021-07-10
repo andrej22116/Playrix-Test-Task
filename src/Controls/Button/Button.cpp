@@ -11,7 +11,7 @@ Button::Button(const std::string& text)
 	_padding[2] = 20;
 	_padding[3] = 40;
 
-	_text.setFont(GameSources::mainFont());
+	_text.setFont(GameSources::font("main_font"));
 	_text.setCharacterSize(32);
 	_text.setString(text);
 
