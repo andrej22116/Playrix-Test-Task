@@ -9,6 +9,11 @@
 
 namespace utils {
 
+    template<typename T>
+    inline float dot(const sf::Vector2<T>& left, const sf::Vector2<T>& right) {
+        return left.x * right.x + left.y * right.y;
+    }
+
     inline bool isFloatingEqual(float first, float second, float precision) {
         return std::abs(first - second) < precision;
     }

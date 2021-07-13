@@ -166,6 +166,23 @@ const Size<uint32_t>& ViewLayer::size() const noexcept
 	return _layerSize;
 }
 
+std::vector<GraphicsObject*> ViewLayer::selectGraphicsObjects(const sf::Rect<float>& rectSpace) const
+{
+	auto selectedObjects = _aabbTree.query({
+		{static_cast<double>(rectSpace.left), static_cast<double>(rectSpace.top)},
+		{static_cast<double>(rectSpace.left + rectSpace.width), static_cast<double>(rectSpace.top + rectSpace.height)}
+	});
+
+	std::vector<GraphicsObject*> result;
+	result.reserve(selectedObjects.size());
+
+	for (auto id : selectedObjects) {
+		result.push_back(_objectsMap.at(static_cast<ObjectId>(id)).graphicsObject);
+	}
+
+	return result;
+}
+
 ViewLayer::~ViewLayer()
 {
 	std::unordered_map<ObjectId, GraphicsObjectData> objectsMap{ std::move(_objectsMap) };
@@ -206,6 +223,10 @@ void ViewLayer::onMouseMoveEvent(const sf::MouseMoveEvent& mouseMoveEvent) noexc
 
 	for (auto id : getGraphicsObjectIdUnderPointList(mouseMoveEvent.x, mouseMoveEvent.y)) {
 		auto& graphicsObjectData = _objectsMap[id];
+		if ( !graphicsObjectData.shape.empty() ) {
+
+		}
+
 		if ( !graphicsObjectData.acceptsMouseEvents ) {
 			continue;
 		}

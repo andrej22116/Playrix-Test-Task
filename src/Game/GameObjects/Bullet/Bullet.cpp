@@ -7,10 +7,12 @@ Bullet::Bullet(const sf::Vector2f& startPoint, const sf::Vector2f& endPoint, flo
 	, _endPoint(endPoint)
 	, _vector(utils::normalize(endPoint - startPoint))
 	, _rect(-15, -15, 30, 30)
-	, _rotationSpeed(3)
+	, _rotationSpeed(12)
 	, _lifeTime(0)
 	, _maxLifeTime(lifeTime)
 {
+	setName("bullet");
+
 	_bullet.setTexture(&GameSources::texture("bullet_texture"));
 	_bullet.setSize({ _rect.width, _rect.height });
 
@@ -38,12 +40,12 @@ void Bullet::update(double updateFrequency, double timeDeviation) noexcept
 	float scaleFactor = (_lifeTime / _maxLifeTime);
 	float scale = std::log(-scaleFactor + 1) * 0.2  + 1;
 	_bullet.setScale({ scale, scale });
-	//_bullet.setRotation(_bullet.getRotation() + _rotationSpeed);
+	_bullet.setRotation(_bullet.getRotation() + _rotationSpeed);
 
 	auto offset = _speed * (timeDeviation + updateFrequency);
 	auto offsetVector = _vector;
 	offsetVector.x *= offset;
-	offsetVector.y *= offset;
+	offsetVector.y *= offset; 
 
 	_currentPoint += offsetVector;
 

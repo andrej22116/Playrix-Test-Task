@@ -4,8 +4,6 @@
 #include <string>
 #include <filesystem>
 
-#include "framework.h"
-#include "PlayrixTest.h"
 #include <Scene/Scene.h>
 
 #include <Game/GameSources/GameSources.h>
@@ -14,6 +12,9 @@
 #include <Game/GameLayer/GameLayer.h>
 #include <Game/BackgroundLayer/BackgroundLayer.h>
 #include <Game/GameTimerLayer/GameTimerLayer.h>
+
+#include "framework.h"
+#include "PlayrixTest.h"
 
 LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
 

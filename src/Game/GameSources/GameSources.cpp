@@ -31,6 +31,10 @@ GameSources::GameSources()
 				"crosshair_texture": {
 					"type": "texture",
 					"value": "./src/img/crosshair.png"
+				},
+				"calm_aim_texture": {
+					"type": "texture",
+					"value": "./src/img/calm_aim.png"
 				}
 			},
 			"game_config": {

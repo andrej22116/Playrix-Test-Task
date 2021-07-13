@@ -1,4 +1,5 @@
 #include "GameLayer.h"
+#include <Game/GameObjects/CalmAim/CalmAim.h>
 
 GameLayer::GameLayer()
 {
@@ -12,6 +13,21 @@ GameLayer::GameLayer()
 		_bulletSet.erase(bullet);
 		_deletePretendents.push_back(bullet);
 	};
+
+	auto size = this->size();
+
+	auto calmAim = new CalmAim();
+	calmAim->setMovingArea({ 0, 0, static_cast<float>(size.width), static_cast<float>(size.height) });
+	calmAim->setInViewLayer(this);
+	calmAim->setPosition({ 100, 100 });
+
+	_aimList.push_back(calmAim);
+
+	calmAim = new CalmAim();
+	calmAim->setMovingArea({ 0, 0, static_cast<float>(size.width), static_cast<float>(size.height) });
+	calmAim->setInViewLayer(this);
+	calmAim->setPosition({ 500, 100 });
+	_aimList.push_back(calmAim);
 }
 
 void GameLayer::update(double updateFrequency, double timeDeviation) noexcept
@@ -29,6 +45,9 @@ void GameLayer::update(double updateFrequency, double timeDeviation) noexcept
 void GameLayer::onSizeEvent(const sf::SizeEvent& sizeEvent) noexcept
 {
 	_gun.setPosition({ static_cast<float>(sizeEvent.width) * 0.5f, static_cast<float>(sizeEvent.height) });
+	for ( auto aimPtr : _aimList ) {
+		aimPtr->setMovingArea({ 0, 0, static_cast<float>(sizeEvent.width), static_cast<float>(sizeEvent.height) });
+	}
 }
 
 bool GameLayer::onMouseButtonEvent(const sf::MouseButtonEvent& mouseButtonEvent, sf::Event::EventType eventType) noexcept

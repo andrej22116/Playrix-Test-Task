@@ -6,6 +6,7 @@
 #include <unordered_set>
 #include <BaseTypes.h>
 #include <AABB/AABB.h>
+#include <SFML/Graphics.hpp>
 
 class GraphicsObject;
 
@@ -42,6 +43,8 @@ public:
 
 	void setSize(const Size<uint32_t>& size) noexcept;
 	const Size<uint32_t>& size() const noexcept;
+
+	std::vector<GraphicsObject*> selectGraphicsObjects(const sf::Rect<float>& rectSpace) const;
 
 	virtual ~ViewLayer();
 

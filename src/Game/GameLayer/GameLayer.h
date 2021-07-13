@@ -6,6 +6,7 @@
 #include <unordered_set>
 #include <vector>
 
+class AimObject;
 
 class GameLayer : public ViewLayer
 {
@@ -29,6 +30,7 @@ private:
 	Crosshair _crosshair;
 	std::unordered_set<Bullet*> _bulletSet;
 	std::vector<Bullet*> _deletePretendents;
+	std::vector<AimObject*> _aimList;
 	Bullet::CallbackType _bulletCallback;
 };
 
