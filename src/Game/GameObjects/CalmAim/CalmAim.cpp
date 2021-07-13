@@ -2,7 +2,7 @@
 #include <Game/GameSources/GameSources.h>
 
 CalmAim::CalmAim()
-	: AimObject(50)
+	: AimObject(40)
 	, _rect(-50, -50, 100, 100)
 	, _speed(2)
 	, _hp(5)

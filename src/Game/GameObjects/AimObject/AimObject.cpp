@@ -5,6 +5,7 @@ AimObject::AimObject(float radius)
 	: _radius(radius)
 	, _quadRadius(radius * radius)
 {
+	setName("aim");
 }
 
 void AimObject::setMovingArea(const sf::Rect<float>& movingArea)
@@ -66,18 +67,19 @@ void AimObject::resolveCollision(AimObject* first, AimObject* second)
 
 	auto diffX = firstPos.x - secondPos.x;
 	auto diffY = firstPos.y - secondPos.y;
+	auto radius = first->_radius + second->_radius;
 
-	auto distance = (diffX * diffX + diffY * diffY) - (first->_quadRadius + second->_quadRadius);
+	auto distance = std::sqrt(diffX * diffX + diffY * diffY) - radius;
 	if (distance >= 0) {
 		return;
 	}
 
-	sf::Vector2f fixVector{ distance * 0.5f, distance * 0.5f };
+	/*sf::Vector2f fixVector{distance * 0.5f, distance * 0.5f};
 	auto fixedFirstMoveVector = first->_moveDirection - fixVector;
 	auto fixedSecondMoveVector = second->_moveDirection - fixVector;
 
 	firstPos -= fixedFirstMoveVector;
-	secondPos -= fixedSecondMoveVector;
+	secondPos -= fixedSecondMoveVector;*/
 
 	first->setPosition(firstPos);
 	second->setPosition(secondPos);
@@ -87,4 +89,7 @@ void AimObject::resolveCollision(AimObject* first, AimObject* second)
 
 	n *= -1.0f;
 	second->_moveDirection -= (n * utils::dot(n, second->_moveDirection)) * 2.0f;
+
+	first->afterResolveCollision();
+	second->afterResolveCollision();
 }
