@@ -28,12 +28,16 @@ private:
 	void collisionBroadPhase();
 	void collisionNarrowPhase();
 
+	void testHit(const sf::Vector2f& point);
+	void registerAim(AimObject* aimObject);
+
 private:
 	Gun _gun;
 	Crosshair _crosshair;
 	std::unordered_set<Bullet*> _bulletSet;
-	std::vector<Bullet*> _deletePretendents;
+	std::vector<Bullet*> _bulletForDeletePretendents;
 	std::unordered_map<AimObject*, std::unordered_set<AimObject*>> _aimCollisionMap;
+	std::vector<AimObject*> _aimList;
 	Bullet::CallbackType _bulletCallback;
 };
 

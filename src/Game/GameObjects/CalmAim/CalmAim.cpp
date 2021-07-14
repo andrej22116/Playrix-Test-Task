@@ -5,7 +5,7 @@ CalmAim::CalmAim()
 	: AimObject(40)
 	, _rect(-50, -50, 100, 100)
 	, _speed(2)
-	, _hp(5)
+	, _hp(1)
 {
 	_shape.setTexture(&GameSources::texture("calm_aim_texture"));
 	_shape.setTextureRect({ 200, 0, 200, 200 });
@@ -26,7 +26,17 @@ void CalmAim::draw(sf::RenderTarget& renderTarget, double deltaTime) noexcept
 
 void CalmAim::update(double updateFrequency, double timeDeviation) noexcept
 {
-	move((updateFrequency + timeDeviation) / updateFrequency);
+	auto deltaTime = (updateFrequency + timeDeviation) / updateFrequency;
+
+	if ( _hp <= 0 ) {
+		dieMove(deltaTime);
+		auto& movingArea = this->movingArea();
+		if ( y() > movingArea.top + movingArea.height ) {
+			removeFromViewLayer();
+		}
+	}
+
+	move(deltaTime);
 
 	auto pos = this->position();
 	pos.x += _rect.left;
@@ -40,6 +50,13 @@ bool CalmAim::registerHit()
 {
 	--_hp;
 	return _hp == 0;
+}
+
+void CalmAim::dieMove(float fallingSpeed)
+{
+	sf::Vector2f fallingVector{ 0, fallingSpeed };
+
+	setMoveDirection(moveDirection() + fallingVector);
 }
 
 void CalmAim::afterResolveCollision()

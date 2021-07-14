@@ -8,6 +8,7 @@ public:
 	AimObject(float radius);
 
 	void setMovingArea(const sf::Rect<float>& movingArea);
+	const sf::Rect<float>& movingArea() const;
 	void setMoveDirection(const sf::Vector2f& direction);
 	const sf::Vector2f& moveDirection() const;
 	void move(float delta);

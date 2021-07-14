@@ -27,7 +27,7 @@ public:
 
 	ObjectId appendGraphicsObject(GraphicsObject* graphicsObject);
 
-	void removeGraphicsObject(GraphicsObject* graphicsObject);
+	bool removeGraphicsObject(GraphicsObject* graphicsObject);
 
 	void updateGraphicsObjectGeometry(GraphicsObject* graphicsObject);
 
@@ -73,11 +73,13 @@ private:
 	std::unordered_set<ObjectId> _cursorOverObjectsSet;
 	std::unordered_set<ObjectId> _cursorOverObjectsSetCache;
 	std::vector<ObjectId> _freeIdList;
+	std::vector<ObjectId> _deferredDeletionList;
 	ObjectId _notUsedId;
 	ObjectId _underCursorObjectId;
 	Size<uint32_t> _layerSize;
 	aabb::Tree _aabbTree;
 	bool _listenMouseEvents;
 	bool _needConstUpdates;
+	bool _update;
 };
 

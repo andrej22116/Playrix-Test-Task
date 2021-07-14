@@ -16,6 +16,11 @@ void AimObject::setMovingArea(const sf::Rect<float>& movingArea)
 	_movingArea.height = movingArea.height - _radius * 2;
 }
 
+const sf::Rect<float>& AimObject::movingArea() const
+{
+	return _movingArea;
+}
+
 void AimObject::setMoveDirection(const sf::Vector2f& direction)
 {
 	_moveDirection = direction;

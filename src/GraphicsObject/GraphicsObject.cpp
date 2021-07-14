@@ -131,8 +131,7 @@ ViewLayer* GraphicsObject::ownerLayer() const
 
 void GraphicsObject::removeFromViewLayer() noexcept
 {
-    if ( _ownerLayer ) {
-        _ownerLayer->removeGraphicsObject(this);
+    if ( _ownerLayer && _ownerLayer->removeGraphicsObject(this) ) {
         _ownerLayer = nullptr;
         _id = 0;
     }

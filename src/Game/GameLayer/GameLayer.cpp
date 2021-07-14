@@ -11,7 +11,8 @@ GameLayer::GameLayer()
 
 	_bulletCallback = [this](Bullet* bullet, const sf::Vector2f& endPoint) {
 		_bulletSet.erase(bullet);
-		_deletePretendents.push_back(bullet);
+		_bulletForDeletePretendents.push_back(bullet);
+		testHit(endPoint);
 	};
 
 	auto size = this->size();
@@ -21,25 +22,24 @@ GameLayer::GameLayer()
 	calmAim->setInViewLayer(this);
 	calmAim->setPosition({ 100, 100 });
 
-	_aimCollisionMap[calmAim] = {};
+	registerAim(calmAim);
 
 	calmAim = new CalmAim();
 	calmAim->setMovingArea({ 0, 0, static_cast<float>(size.width), static_cast<float>(size.height) });
 	calmAim->setInViewLayer(this);
 	calmAim->setPosition({ 500, 95 });
-	_aimCollisionMap[calmAim] = {};
+
+	registerAim(calmAim);
 }
 
 void GameLayer::update(double updateFrequency, double timeDeviation) noexcept
 {
 	ViewLayer::update(updateFrequency, timeDeviation);
-	if ( !_deletePretendents.empty() ) {
-		for ( auto bullet : _deletePretendents ) {
-			bullet->removeFromViewLayer();
-			delete bullet;
-		}
-		_deletePretendents.clear();
+	for ( auto bullet : _bulletForDeletePretendents) {
+		bullet->removeFromViewLayer();
+		delete bullet;
 	}
+	_bulletForDeletePretendents.clear();
 
 	collisionBroadPhase();
 	collisionNarrowPhase();
@@ -77,6 +77,10 @@ GameLayer::~GameLayer()
 		bullet->removeFromViewLayer();
 		delete bullet;
 	}
+	for (auto aim : _aimList) {
+		aim->removeFromViewLayer();
+		delete aim;
+	}
 }
 
 void GameLayer::collisionBroadPhase()
@@ -102,6 +106,10 @@ void GameLayer::collisionBroadPhase()
 		closeAimSet.erase(aim);
 	}
 
+	if ( _aimCollisionMap.size() < 2 ) {
+		return;
+	}
+
 	auto iterator = _aimCollisionMap.begin();
 	auto end = _aimCollisionMap.end();
 	auto beforeEnd = end;
@@ -124,4 +132,23 @@ void GameLayer::collisionNarrowPhase()
 			AimObject::resolveCollision(aim, closeAim);
 		}
 	}
+}
+
+void GameLayer::testHit(const sf::Vector2f& point)
+{
+	auto hitObjects = selectGraphicsObjects({ point.x, point.y, point.x + 1, point.y + 1 });
+	for ( auto objectPtr : hitObjects ) {
+		if (objectPtr->name() == "aim") {
+			auto aim = static_cast<AimObject*>(objectPtr);
+			if ( aim->hitTest(point) && aim->registerHit() ) {
+				_aimCollisionMap.erase(aim);
+			}
+		}
+	}
+}
+
+void GameLayer::registerAim(AimObject* aimObject)
+{
+	_aimCollisionMap[aimObject] = {};
+	_aimList.push_back(aimObject);
 }

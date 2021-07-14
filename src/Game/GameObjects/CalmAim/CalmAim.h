@@ -15,6 +15,9 @@ public:
 	virtual void afterResolveCollision() override;
 
 private:
+	void dieMove(float fallingSpeed);
+
+private:
 	sf::Rect<float> _rect;
 	sf::RectangleShape _shape;
 	float _speed;

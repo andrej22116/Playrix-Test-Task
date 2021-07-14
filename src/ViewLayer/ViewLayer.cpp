@@ -88,15 +88,22 @@ ObjectId ViewLayer::appendGraphicsObject(GraphicsObject* graphicsObject)
 	return objectId;
 }
 
-void ViewLayer::removeGraphicsObject(GraphicsObject* graphicsObject)
+bool ViewLayer::removeGraphicsObject(GraphicsObject* graphicsObject)
 {
 	auto id = checkGraphicsObject(graphicsObject);
 	if ( !id ) {
-		return;
+		return false;
+	}
+
+	if (_update) {
+		_deferredDeletionList.push_back(id);
+		return false;
 	}
 
 	_aabbTree.removeParticle(id);
 	_objectsMap.erase(id);
+
+	return true;
 }
 
 void ViewLayer::updateGraphicsObjectGeometry(GraphicsObject* graphicsObject)
@@ -202,15 +209,23 @@ void ViewLayer::draw(sf::RenderTarget& renderTarget, double deltaTime) noexcept
 
 void ViewLayer::update(double updateFrequency, double timeDeviation) noexcept
 {
-	for (auto& [_, objectData] : _objectsMap) {
+	_update = true;
+	for ( auto& [_, objectData] : _objectsMap ) {
 		objectData.graphicsObject->update(updateFrequency, timeDeviation);
+	}
+
+	_update = false;
+	for (auto objId : _deferredDeletionList) {
+		if (containsId(objId)) {
+			removeGraphicsObject(_objectsMap.at(objId).graphicsObject);
+		}
 	}
 }
 
 bool ViewLayer::onMouseButtonEvent(const sf::MouseButtonEvent& mouseButtonEvent, sf::Event::EventType eventType) noexcept
 {
 	for ( auto id : getGraphicsObjectIdUnderPointList(mouseButtonEvent.x, mouseButtonEvent.y) ) {
-		if ( !_objectsMap[id].graphicsObject->onMouseButtonEvent(mouseButtonEvent, eventType) ) {
+		if ( !_objectsMap.at(id).graphicsObject->onMouseButtonEvent(mouseButtonEvent, eventType) ) {
 			return false;
 		}
 	}
@@ -222,7 +237,7 @@ void ViewLayer::onMouseMoveEvent(const sf::MouseMoveEvent& mouseMoveEvent) noexc
 	_cursorOverObjectsSetCache.clear();
 
 	for (auto id : getGraphicsObjectIdUnderPointList(mouseMoveEvent.x, mouseMoveEvent.y)) {
-		auto& graphicsObjectData = _objectsMap[id];
+		auto& graphicsObjectData = _objectsMap.at(id);
 		if ( !graphicsObjectData.shape.empty() ) {
 
 		}
@@ -247,7 +262,7 @@ void ViewLayer::onMouseMoveEvent(const sf::MouseMoveEvent& mouseMoveEvent) noexc
 	}
 
 	for ( auto id : _cursorOverObjectsSet ) {
-		auto& graphicsObjectData = _objectsMap[id];
+		auto& graphicsObjectData = _objectsMap.at(id);
 		if (graphicsObjectData.acceptsMouseEvents) {
 			graphicsObjectData.graphicsObject->onMouseLeaveEvent(mouseMoveEvent);
 		}
