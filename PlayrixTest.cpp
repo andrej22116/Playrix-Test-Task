@@ -53,9 +53,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     auto menuLayer = new MenuLayer();
     menuLayer->setListenMouseEvents(true);
-    menuLayer->setStartEventHandler([](const std::string_view& str) {
-        MessageBoxA(0, str.data(), "Test", MB_OK);
-    });
 
     auto timerLayer = new GameTimerLayer();
 
@@ -63,19 +60,36 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     auto scene = new Scene({ windowSize.x, windowSize.y });
     scene->pushViewLayer(backgroundLayer);
-    scene->pushViewLayer(gameLayer);
-    /*scene->pushViewLayer(timerLayer);
-    scene->pushViewLayer(menuLayer);*/
-
-    timerLayer->setTime(15);
-    timerLayer->setTimeoutEventHandler([&]() {
-        timerLayer->setTime(15);
-    });
+    scene->pushViewLayer(menuLayer);
 
     double constUpdateTime = 0.015;
     double currentConstUpdateTime = 0.0160000001;
 
-    window.setMouseCursorVisible(false);
+    auto endGame = [&](const std::string& msg) {
+        timerLayer->setTimeoutEventHandler(nullptr);
+        scene->popViewLayer();
+        scene->popViewLayer();
+
+        scene->pushViewLayer(menuLayer);
+        menuLayer->setTitleText(msg);
+
+        window.setMouseCursorVisible(true);
+    };
+
+    menuLayer->setStartEventHandler([&](const std::string_view& str) {
+        scene->popViewLayer();
+
+        timerLayer->setTime(60);
+        timerLayer->setTimeoutEventHandler(std::bind(endGame, std::string{ "You've lost!" }));
+
+        scene->pushViewLayer(timerLayer);
+        scene->pushViewLayer(gameLayer);
+
+        gameLayer->initGame();
+        gameLayer->setEndGameHandler(std::bind(endGame, std::string{ "You've won!" }));
+
+        window.setMouseCursorVisible(false);
+    });
 
     clock.restart();
     while ( window.isOpen() )
@@ -85,13 +99,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
         time += deltaTime;
         clock.restart();
-
-        sf::Text text{ "Delta time: " + std::to_string(deltaTime), GameSources::font("main_font"), 24};
-        sf::Text text2{ "Time: " + std::to_string(static_cast<int>(time)), GameSources::font("main_font"), 24 };
-        text.setPosition(0, 0);
-        text2.setPosition(24, 52);
-        text.setFillColor({ 0,0,0 });
-        text2.setFillColor({ 0,0,0 });
 
         sf::Event event;
         while (window.pollEvent(event))
@@ -119,10 +126,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
             if (event.type == sf::Event::Closed)
                 window.close();
-
         }
-
-        
 
         window.clear();
         if (currentConstUpdateTime > constUpdateTime) {
@@ -130,9 +134,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
             currentConstUpdateTime = 0;
         }
         scene->drawScene(window, deltaTime);
-        window.draw(text);
-        window.draw(text2);
-        //window.draw(shape);
         window.display();
     }
 

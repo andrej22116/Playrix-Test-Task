@@ -49,10 +49,20 @@ bool AimObject::hitTest(const sf::Vector2f& hitPosition)
 void AimObject::update(double updateFrequency, double timeDeviation) noexcept
 {
 	auto position = this->position();
-	if (position.x <= _movingArea.left || position.x >= _movingArea.left + _movingArea.width) {
+	if (position.x <= _movingArea.left) {
+		setX(_movingArea.left);
 		_moveDirection.x = -_moveDirection.x;
 	}
-	if (position.y <= _movingArea.top || position.y >= _movingArea.top + _movingArea.height) {
+	else if (position.x >= _movingArea.left + _movingArea.width) {
+		setX(_movingArea.left + _movingArea.width);
+		_moveDirection.x = -_moveDirection.x;
+	}
+	if (position.y <= _movingArea.top) {
+		setY(_movingArea.top);
+		_moveDirection.y = -_moveDirection.y;
+	}
+	else if (position.y >= _movingArea.top + _movingArea.height) {
+		setY(_movingArea.top + _movingArea.height);
 		_moveDirection.y = -_moveDirection.y;
 	}
 }

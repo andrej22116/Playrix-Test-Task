@@ -1,5 +1,8 @@
 #include "GameLayer.h"
 #include <Game/GameObjects/CalmAim/CalmAim.h>
+#include <Game/GameObjects/FastAim/FastAim.h>
+#include <Utils/Utils.hpp>
+#include <random>
 
 GameLayer::GameLayer()
 {
@@ -14,22 +17,6 @@ GameLayer::GameLayer()
 		_bulletForDeletePretendents.push_back(bullet);
 		testHit(endPoint);
 	};
-
-	auto size = this->size();
-
-	auto calmAim = new CalmAim();
-	calmAim->setMovingArea({ 0, 0, static_cast<float>(size.width), static_cast<float>(size.height) });
-	calmAim->setInViewLayer(this);
-	calmAim->setPosition({ 100, 100 });
-
-	registerAim(calmAim);
-
-	calmAim = new CalmAim();
-	calmAim->setMovingArea({ 0, 0, static_cast<float>(size.width), static_cast<float>(size.height) });
-	calmAim->setInViewLayer(this);
-	calmAim->setPosition({ 500, 95 });
-
-	registerAim(calmAim);
 }
 
 void GameLayer::update(double updateFrequency, double timeDeviation) noexcept
@@ -51,13 +38,15 @@ void GameLayer::onSizeEvent(const sf::SizeEvent& sizeEvent) noexcept
 	for ( auto& [aimPtr, _] : _aimCollisionMap ) {
 		aimPtr->setMovingArea({ 0, 0, static_cast<float>(sizeEvent.width), static_cast<float>(sizeEvent.height) });
 	}
+
+	ViewLayer::onSizeEvent(sizeEvent);
 }
 
 bool GameLayer::onMouseButtonEvent(const sf::MouseButtonEvent& mouseButtonEvent, sf::Event::EventType eventType) noexcept
 {
 	sf::Vector2f startPos{ _gun.x(), _gun.y() - 45 };
 
-	auto bullet = new Bullet(startPos, _crosshair.position(), 1);
+	auto bullet = new Bullet(startPos, _crosshair.position(), 0.5);
 	bullet->setInViewLayer(this);
 	bullet->setEndPointEventHandler(_bulletCallback);
 	_bulletSet.insert(bullet);
@@ -71,16 +60,60 @@ void GameLayer::onMouseMoveEvent(const sf::MouseMoveEvent& mouseMoveEvent) noexc
 	_gun.setX(mouseMoveEvent.x);
 }
 
+void GameLayer::initGame()
+{
+	deleteObjects();
+
+	_crosshair.removeFromViewLayer();
+	_gun.removeFromViewLayer();
+
+	auto& size = this->size();
+	std::random_device rd;
+	std::uniform_real_distribution<float> dist(-1, 1);
+	std::uniform_real_distribution<float> posDist(100, (size.width > size.height ? size.width : size.height) - 100);
+
+	for ( int i = 0; i < 10; ++i ) {
+		AimObject* aim = nullptr;
+		if (dist(rd) < 0) {
+			aim = new CalmAim();
+		}
+		else {
+			aim = new FastAim(utils::normalize(sf::Vector2f{ dist(rd), dist(rd) }));
+		}
+
+		aim->setPosition({ posDist(rd), posDist(rd) });
+		aim->setMovingArea({ 0, 0, static_cast<float>(size.width), static_cast<float>(size.height) });
+		aim->setInViewLayer(this);
+
+		registerAim(aim);
+	}
+
+	_crosshair.setInViewLayer(this);
+	_gun.setInViewLayer(this);
+}
+
+void GameLayer::setEndGameHandler(std::function<void()> callback)
+{
+	_onEndGameHandler = callback;
+}
+
 GameLayer::~GameLayer()
+{
+	deleteObjects();
+}
+
+void GameLayer::deleteObjects()
 {
 	for (auto bullet : _bulletSet) {
 		bullet->removeFromViewLayer();
 		delete bullet;
 	}
+	_bulletSet.clear();
 	for (auto aim : _aimList) {
 		aim->removeFromViewLayer();
 		delete aim;
 	}
+	_aimList.clear();
 }
 
 void GameLayer::collisionBroadPhase()
@@ -98,7 +131,8 @@ void GameLayer::collisionBroadPhase()
 		closeAimSet.reserve(closeObjects.size());
 
 		for ( auto objPtr : closeObjects ) {
-			if (objPtr->name() == "aim") {
+			if ( objPtr->name() == "aim" 
+				&& _aimCollisionMap.find(static_cast<AimObject*>(objPtr)) != _aimCollisionMap.end() ) {
 				closeAimSet.insert(static_cast<AimObject*>(objPtr));
 			}
 		}
@@ -142,6 +176,9 @@ void GameLayer::testHit(const sf::Vector2f& point)
 			auto aim = static_cast<AimObject*>(objectPtr);
 			if ( aim->hitTest(point) && aim->registerHit() ) {
 				_aimCollisionMap.erase(aim);
+				if (_aimCollisionMap.empty() && _onEndGameHandler != nullptr) {
+					_onEndGameHandler();
+				}
 			}
 		}
 	}

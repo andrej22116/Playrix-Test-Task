@@ -35,6 +35,10 @@ GameSources::GameSources()
 				"calm_aim_texture": {
 					"type": "texture",
 					"value": "./src/img/calm_aim.png"
+				},
+				"fast_aim_texture": {
+					"type": "texture",
+					"value": "./src/img/fast_aim.png"
 				}
 			},
 			"game_config": {

@@ -5,10 +5,10 @@ CalmAim::CalmAim()
 	: AimObject(40)
 	, _rect(-50, -50, 100, 100)
 	, _speed(2)
-	, _hp(1)
+	, _hp(2)
 {
 	_shape.setTexture(&GameSources::texture("calm_aim_texture"));
-	_shape.setTextureRect({ 200, 0, 200, 200 });
+	_shape.setTextureRect({ 0, 0, 200, 200 });
 	_shape.setSize({ 100, 100 });
 	
 	setMoveDirection(sf::Vector2f{ 1, 0 } * _speed);
@@ -29,7 +29,7 @@ void CalmAim::update(double updateFrequency, double timeDeviation) noexcept
 	auto deltaTime = (updateFrequency + timeDeviation) / updateFrequency;
 
 	if ( _hp <= 0 ) {
-		dieMove(deltaTime);
+		dieMove(deltaTime * 0.5);
 		auto& movingArea = this->movingArea();
 		if ( y() > movingArea.top + movingArea.height ) {
 			removeFromViewLayer();
@@ -43,13 +43,23 @@ void CalmAim::update(double updateFrequency, double timeDeviation) noexcept
 	pos.y += _rect.top;
 	_shape.setPosition(pos);
 
-	AimObject::update(updateFrequency, timeDeviation);
+	if (_hp > 0) {
+		AimObject::update(updateFrequency, timeDeviation);
+	}
 }
 
 bool CalmAim::registerHit()
 {
 	--_hp;
-	return _hp == 0;
+	if ( _hp == 1 ) {
+		_shape.setTextureRect({ 200, 0, 200, 200 });
+	}
+	else if ( _hp == 0 ) {
+		_shape.setTextureRect({ 400, 0, 200, 200 });
+		return true;
+	}
+
+	return false;
 }
 
 void CalmAim::dieMove(float fallingSpeed)
@@ -61,7 +71,7 @@ void CalmAim::dieMove(float fallingSpeed)
 
 void CalmAim::afterResolveCollision()
 {
-	auto& dir = moveDirection();
-	setMoveDirection(dir.x >= 0 ? sf::Vector2f{ 1, 0 } *_speed : sf::Vector2f{ -1, 0 } *_speed);
+	//auto& dir = moveDirection();
+	//setMoveDirection(dir.x >= 0 ? sf::Vector2f{ 1, 0 } *_speed : sf::Vector2f{ -1, 0 } *_speed);
 }
 
